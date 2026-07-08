@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Japón 2026">
+<meta name="theme-color" content="#F3EEE2">
+<title>Japón · Itinerario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Noto+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EEE2;
+    --paper-2:#EAE3D1;
+    --ink:#1B2A4A;
+    --ink-soft:#5B5546;
+    --line:#D8CFBA;
+    --gold:#C9A227;
+    --vermillion:#C1442D;
+    --city:#F68B1E; /* overridden per active city */
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0; background:var(--paper); color:var(--ink); font-family:'Noto Sans', sans-serif; overscroll-behavior-y:none;}
+  body{padding-bottom:40px;}
+
+  .display{font-family:'Oswald', sans-serif; text-transform:uppercase; letter-spacing:0.04em;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  /* ===== Header ===== */
+  header{
+    position:sticky; top:0; z-index:20;
+    background:var(--paper);
+    border-bottom:2px solid var(--ink);
+    padding:14px 16px 0 16px;
+  }
+  .trip-title{
+    display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px;
+  }
+  .trip-title h1{
+    font-size:20px; margin:0; font-weight:700; letter-spacing:0.06em;
+  }
+  .trip-title span{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-soft);
+  }
+
+  .city-tabs{
+    display:flex; gap:6px; overflow-x:auto; padding-bottom:12px; scrollbar-width:none;
+  }
+  .city-tabs::-webkit-scrollbar{display:none;}
+  .city-tab{
+    flex:0 0 auto;
+    display:flex; align-items:center; gap:8px;
+    padding:8px 12px;
+    border:2px solid var(--ink);
+    background:var(--paper);
+    border-radius:3px;
+    cursor:pointer;
+    font-family:'Oswald', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.05em;
+    color:var(--ink);
+    transition:transform .15s ease;
+  }
+  .city-tab .dot{width:9px; height:9px; border-radius:50%; background:var(--dot-color, var(--ink));}
+  .city-tab.active{
+    background:var(--dot-color, var(--ink));
+    color:var(--paper);
+    transform:translateY(-1px);
+  }
+  .city-tab.active .dot{background:var(--paper);}
+
+  /* ===== Day selector (ticket strip) ===== */
+  .day-strip{
+    display:flex; gap:10px; overflow-x:auto; padding:16px; scrollbar-width:none;
+  }
+  .day-strip::-webkit-scrollbar{display:none;}
+
+  .ticket{
+    flex:0 0 auto;
+    position:relative;
+    width:104px;
+    background:var(--paper);
+    border:2px solid var(--ink);
+    border-radius:6px;
+    padding:10px 8px 12px 8px;
+    cursor:pointer;
+    text-align:left;
+  }
+  .ticket::before, .ticket::after{
+    content:''; position:absolute; width:14px; height:14px; background:var(--paper);
+    border:2px solid var(--ink); border-radius:50%; left:50%; transform:translateX(-50%);
+  }
+  .ticket::before{ top:-8px; }
+  .ticket::after{ bottom:-8px; }
+  .ticket .num{ font-size:26px; font-weight:700; line-height:1; }
+  .ticket .wd{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin-top:4px;}
+  .ticket .dt{ font-size:11px; font-family:'JetBrains Mono', monospace; color:var(--ink-soft); }
+  .ticket .code{
+    position:absolute; top:8px; right:8px; font-size:9px; font-family:'JetBrains Mono',monospace;
+    padding:2px 4px; border-radius:3px; background:var(--dot-color); color:var(--paper); font-weight:600;
+  }
+  .ticket.active{ background:var(--paper-2); border-color:var(--dot-color); box-shadow:0 3px 0 var(--dot-color); }
+  .ticket.today::after{ background:var(--vermillion); border-color:var(--vermillion); }
+  .ticket .today-badge{
+    position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
+    font-size:8px; letter-spacing:.08em; color:var(--vermillion); font-weight:700; text-transform:uppercase;
+  }
+
+  /* ===== Main content ===== */
+  main{ padding:4px 16px 24px 16px; }
+
+  .day-heading{
+    display:flex; align-items:baseline; gap:10px; margin:6px 0 14px 0;
+  }
+  .day-heading h2{ font-size:17px; margin:0; font-weight:600; }
+  .day-heading .sub{ font-size:12px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace;}
+
+  .block{
+    background:var(--paper);
+    border:2px solid var(--ink);
+    border-radius:8px;
+    margin-bottom:14px;
+    overflow:hidden;
+  }
+  .block-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 12px;
+    background:var(--dot-color);
+    color:var(--paper);
+  }
+  .block-head .label{ font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:.06em; font-size:13px; }
+  .block-head .time{ font-family:'JetBrains Mono',monospace; font-size:12px; }
+
+  .items{ padding:6px 0; }
+  .item{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 12px;
+    border-top:1px dashed var(--line);
+    text-decoration:none; color:var(--ink);
+  }
+  .items .item:first-child{ border-top:none; }
+  .item .pin{ flex:0 0 auto; margin-top:2px; }
+  .item .name{ font-size:14.5px; font-weight:500; line-height:1.35;}
+  .item .note{ display:block; font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .item.pending .name{ color:var(--vermillion); font-style:italic; }
+
+  .empty{
+    text-align:center; padding:40px 20px; color:var(--ink-soft); font-size:14px;
+  }
+  .empty b{ display:block; color:var(--ink); font-family:'Oswald',sans-serif; letter-spacing:.05em; margin-bottom:6px; font-size:15px;}
+
+  footer{ text-align:center; padding:20px; font-size:11px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="trip-title">
+    <h1 class="display">Japón · 18 días</h1>
+    <span id="trip-range" class="mono"></span>
+  </div>
+  <div class="city-tabs" id="city-tabs"></div>
+</header>
+
+<div class="day-strip" id="day-strip"></div>
+
+<main id="main"></main>
+
+<footer>浮世の道連れ — hecho a medida para el viaje</footer>
+
+<script>
+// ==========================================================
+// DATOS DEL VIAJE
+// Añade aquí Kioto, Kanazawa y Tokio siguiendo la misma estructura.
+// ==========================================================
+const TRIP = {
+  osaka: {
+    code: 'OSA', name: 'Osaka', color: '#F68B1E',
+    days: [
+      {
+        date: '2026-08-10', weekday: 'Lunes', title: 'Llegada a Osaka',
+        blocks: [
+          { label: 'Noche', time: '21:30', items: [
+            { name: 'Paseo y cena tranquila por Dotombori', place: 'Dotonbori, Osaka' }
+          ]}
+        ]
+      },
+      {
+        date: '2026-08-11', weekday: 'Martes', title: 'Centro histórico y Umeda',
+        blocks: [
+          { label: 'Mañana', time: '09:00', items: [
+            { name: 'Castillo de Osaka', place: 'Osaka Castle' },
+            { name: 'Parque Nakanoshima', place: 'Nakanoshima Park, Osaka' }
+          ]},
+          { label: 'Mediodía', time: '13:00', items: [
+            { name: 'Comer y ver el Barrio de Umeda', place: 'Umeda, Osaka' }
+          ]},
+          { label: 'Tarde / Noche', time: '20:00', items: [
+            { name: 'Cenar y ver Barrio de Namba', place: 'Namba, Osaka' }
+          ]}
+        ]
+      },
+      {
+        date: '2026-08-12', weekday: 'Miércoles', title: 'Universal Studios Japan',
+        blocks: [
+          { label: 'Todo el día', time: 'antes de 08:00', items: [
+            { name: 'Universal Studios Japón', place: 'Universal Studios Japan, Osaka', note: 'Llegar al parque antes de las 08:00' }
+          ]}
+        ]
+      },
+      {
+        date: '2026-08-13', weekday: 'Jueves', title: 'Templos y Nipponbashi',
+        blocks: [
+          { label: 'Mañana', time: '07:00', items: [
+            { name: 'Templo Sumiyoshi Taisha', place: 'Sumiyoshi Taisha, Osaka', note: 'Abierto de 6:00 a 17:00' },
+            { name: 'Templo Shitenno-ji', place: 'Shitenno-ji, Osaka', note: 'Abierto de 8:30 a 16:30' }
+          ]},
+          { label: 'Mediodía', time: '13:00', items: [
+            { name: 'Comer en Kuromon Ichiba', place: 'Kuromon Ichiba Market, Osaka' }
+          ]},
+          { label: 'Tarde', time: '17:00', items: [
+            { name: 'Pasear por Nipponbashi Den Den Town', place: 'Denden Town, Osaka' },
+            { name: 'Pasear por Shinsekai', place: 'Shinsekai, Osaka' }
+          ]},
+          { label: 'Noche', time: '20:00', items: [
+            { name: 'Pasear y cenar por Dotomburi', place: 'Dotonbori, Osaka' }
+          ]}
+        ]
+      }
+    ]
+  },
+  kyoto: { code: 'KYO', name: 'Kioto', color: '#2F6D4F', days: [] },
+  kanazawa: { code: 'KNZ', name: 'Kanazawa', color: '#C9A227', days: [] },
+  tokyo: { code: 'TYO', name: 'Tokio', color: '#2F4C7C', days: [] }
+};
+
+// ==========================================================
+// LÓGICA DE RENDERIZADO
+// ==========================================================
+let activeCity = 'osaka';
+let activeDayIndex = 0;
+
+const cityTabsEl = document.getElementById('city-tabs');
+const dayStripEl = document.getElementById('day-strip');
+const mainEl = document.getElementById('main');
+const rangeEl = document.getElementById('trip-range');
+
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function mapsUrl(place){
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(place);
+}
+
+function pinIcon(){
+  return '<svg class="pin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
+}
+
+function renderCityTabs(){
+  cityTabsEl.innerHTML = '';
+  Object.keys(TRIP).forEach(key => {
+    const city = TRIP[key];
+    const btn = document.createElement('div');
+    btn.className = 'city-tab' + (key === activeCity ? ' active' : '');
+    btn.style.setProperty('--dot-color', city.color);
+    btn.innerHTML = '<span class="dot"></span>' + city.name;
+    btn.onclick = () => { activeCity = key; activeDayIndex = 0; renderAll(); };
+    cityTabsEl.appendChild(btn);
+  });
+}
+
+function renderDayStrip(){
+  const city = TRIP[activeCity];
+  dayStripEl.innerHTML = '';
+  dayStripEl.style.setProperty('--dot-color', city.color);
+  const today = todayISO();
+
+  if(!city.days.length){ return; }
+
+  city.days.forEach((day, i) => {
+    const t = document.createElement('div');
+    const isToday = day.date === today;
+    t.className = 'ticket' + (i === activeDayIndex ? ' active' : '') + (isToday ? ' today' : '');
+    t.style.setProperty('--dot-color', city.color);
+    const dd = day.date.split('-').slice(1).reverse().join('/');
+    t.innerHTML =
+      '<div class="code">' + city.code + '</div>' +
+      '<div class="num mono">' + (i+1) + '</div>' +
+      '<div class="wd">' + day.weekday + '</div>' +
+      '<div class="dt">' + dd + '</div>' +
+      (isToday ? '<div class="today-badge">Hoy</div>' : '');
+    t.onclick = () => { activeDayIndex = i; renderAll(); };
+    dayStripEl.appendChild(t);
+  });
+}
+
+function renderMain(){
+  const city = TRIP[activeCity];
+  mainEl.innerHTML = '';
+  mainEl.style.setProperty('--dot-color', city.color);
+
+  if(!city.days.length){
+    mainEl.innerHTML = '<div class="empty"><b>Sin itinerario todavía</b>Añade los días de ' + city.name + ' en el objeto TRIP del código.</div>';
+    return;
+  }
+
+  const day = city.days[activeDayIndex];
+
+  const heading = document.createElement('div');
+  heading.className = 'day-heading';
+  heading.innerHTML = '<h2>' + day.title + '</h2><span class="sub">' + day.weekday + ' · ' + day.date.split('-').slice(1).reverse().join('/') + '</span>';
+  mainEl.appendChild(heading);
+
+  day.blocks.forEach(block => {
+    const b = document.createElement('div');
+    b.className = 'block';
+    b.style.setProperty('--dot-color', city.color);
+
+    const head = document.createElement('div');
+    head.className = 'block-head';
+    head.innerHTML = '<span class="label">' + block.label + '</span><span class="time mono">' + block.time + '</span>';
+    b.appendChild(head);
+
+    const items = document.createElement('div');
+    items.className = 'items';
+    block.items.forEach(item => {
+      const a = document.createElement('a');
+      a.className = 'item' + (item.pending ? ' pending' : '');
+      a.href = item.pending ? '#' : mapsUrl(item.place || item.name);
+      a.target = item.pending ? '' : '_blank';
+      a.innerHTML = pinIcon() + '<div><span class="name">' + item.name + '</span>' + (item.note ? '<span class="note">' + item.note + '</span>' : '') + '</div>';
+      items.appendChild(a);
+    });
+    b.appendChild(items);
+    mainEl.appendChild(b);
+  });
+}
+
+function renderAll(){
+  renderCityTabs();
+  renderDayStrip();
+  renderMain();
+}
+
+renderAll();
+</script>
+</body>
+</html>
