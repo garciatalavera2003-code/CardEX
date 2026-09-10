@@ -9,8 +9,7 @@
 name="viewport"
 content="width=device-width,initial-scale=1,maximum-scale=1">
 
-<title>CEX — Card Detector V0.2.2</title>
-
+<title>CEX — Card Detector V0.2.3</title>
 
 <style>
 
@@ -18,183 +17,99 @@ content="width=device-width,initial-scale=1,maximum-scale=1">
 box-sizing:border-box;
 }
 
-
 body{
-
 margin:0;
-
 background:#0b0b0d;
-
 color:#fff;
-
-font-family:
-Arial,
-Helvetica,
-sans-serif;
-
+font-family:Arial,Helvetica,sans-serif;
 }
-
 
 .container{
-
 max-width:1000px;
-
 margin:auto;
-
-padding:
-30px
-20px
-50px;
-
+padding:30px 20px 50px;
 text-align:center;
-
 }
-
 
 h1{
-
-margin:
-10px
-0
-5px;
-
+margin:10px 0 5px;
 font-size:42px;
-
 letter-spacing:3px;
-
 }
-
 
 .subtitle{
-
 color:#888;
-
 margin-bottom:30px;
-
 }
 
+.version{
+font-size:12px;
+color:#555;
+margin-top:-20px;
+margin-bottom:30px;
+}
 
 .upload{
-
 display:inline-block;
-
 background:#fff;
-
 color:#111;
-
-padding:
-16px
-25px;
-
+padding:16px 25px;
 border-radius:10px;
-
 font-weight:bold;
-
 cursor:pointer;
-
 font-size:16px;
-
 }
-
 
 .upload input{
-
 display:none;
-
 }
-
 
 #status{
-
-margin:
-22px
-0;
-
+margin:22px 0;
 min-height:25px;
-
 font-size:18px;
-
 }
-
 
 .preview{
-
 width:100%;
-
 margin-top:20px;
-
 }
-
 
 #canvas{
-
 display:none;
-
 max-width:100%;
-
 height:auto;
-
-margin:
-20px
-auto;
-
+margin:20px auto;
 border-radius:10px;
-
 border:1px solid #333;
-
 }
-
 
 .result{
-
 display:none;
-
-margin:
-25px
-auto;
-
+margin:25px auto;
 padding:20px;
-
 max-width:700px;
-
 background:#161619;
-
 border-radius:12px;
-
 text-align:left;
-
 line-height:1.7;
-
 }
-
 
 .success{
-
 color:#42e878;
-
 }
-
 
 .warning{
-
 color:#ffd166;
-
 }
-
 
 .error{
-
 color:#ff6464;
-
 }
 
-
 .small{
-
 font-size:13px;
-
 color:#888;
-
 }
 
 </style>
@@ -212,9 +127,12 @@ color:#888;
 
 
 <div class="subtitle">
+CARD DETECTION — V0.2.3
+</div>
 
-CARD DETECTION — V0.2.2
 
+<div class="version">
+SYSTEM VERSION 0.2.3
 </div>
 
 
@@ -231,9 +149,7 @@ accept="image/*">
 
 
 <div id="status">
-
 Cargando motor de visión...
-
 </div>
 
 
@@ -247,7 +163,6 @@ Cargando motor de visión...
 <div
 id="result"
 class="result">
-
 </div>
 
 
@@ -255,9 +170,9 @@ class="result">
 
 
 
-<!-- =====================================
+<!-- ==================================================
      OPENCV
-===================================== -->
+================================================== -->
 
 <script src="https://docs.opencv.org/4.x/opencv.js"></script>
 
@@ -265,36 +180,26 @@ class="result">
 
 <script>
 
+/* ==================================================
+   CONFIGURACIÓN
+================================================== */
+
+const VERSION = "0.2.3";
 
 const input =
-document.getElementById(
-"fileInput"
-);
-
+document.getElementById("fileInput");
 
 const status =
-document.getElementById(
-"status"
-);
-
+document.getElementById("status");
 
 const canvas =
-document.getElementById(
-"canvas"
-);
-
+document.getElementById("canvas");
 
 const ctx =
-canvas.getContext(
-"2d"
-);
-
+canvas.getContext("2d");
 
 const result =
-document.getElementById(
-"result"
-);
-
+document.getElementById("result");
 
 
 let cvLoaded = false;
@@ -302,1424 +207,1257 @@ let cvLoaded = false;
 let cvTimer = null;
 
 
-
-/* =====================================
+/* ==================================================
    ESTADO
-===================================== */
+================================================== */
 
+function setStatus(text, className = "") {
 
-function setStatus(
-text,
-className=""
-){
+    status.className = className;
 
-status.className =
-className;
-
-status.textContent =
-text;
+    status.textContent = text;
 
 }
 
 
+/* ==================================================
+   COMPROBAR OPENCV
+================================================== */
 
-/* =====================================
+function checkOpenCV() {
+
+    try {
+
+        if (
+            typeof cv !== "undefined" &&
+            typeof cv.Mat !== "undefined"
+        ) {
+
+            cvLoaded = true;
+
+            if (cvTimer) {
+
+                clearInterval(cvTimer);
+
+                cvTimer = null;
+
+            }
+
+            setStatus(
+                "Motor de visión listo ✓",
+                "success"
+            );
+
+            return true;
+
+        }
+
+    } catch (error) {
+
+        console.log(error);
+
+    }
+
+    return false;
+
+}
+
+
+/* ==================================================
    ESPERAR OPENCV
-===================================== */
-
-
-function waitForOpenCV(){
-
-if(
-typeof cv !== "undefined"
-){
-
-if(
-cv.Mat
-){
-
-cvLoaded = true;
-
-if(cvTimer)
-clearInterval(
-cvTimer
-);
-
-setStatus(
-"Motor de visión listo ✓",
-"success"
-);
-
-return;
-
-}
-
-
-if(
-cv.onRuntimeInitialized === undefined
-){
-
-cv.onRuntimeInitialized =
-function(){
-
-cvLoaded = true;
-
-if(cvTimer)
-clearInterval(
-cvTimer
-);
-
-setStatus(
-"Motor de visión listo ✓",
-"success"
-);
-
-};
-
-}
-
-}
-
-}
-
+================================================== */
 
 cvTimer =
 setInterval(
-waitForOpenCV,
-100
+    checkOpenCV,
+    100
 );
 
-
-waitForOpenCV();
-
-
-
-/* =====================================
-   TIMEOUT
-===================================== */
+checkOpenCV();
 
 
 setTimeout(
-function(){
+    function(){
 
-if(!cvLoaded){
+        if (!cvLoaded) {
 
-setStatus(
-"✕ No se pudo cargar el motor de visión.",
-"error"
+            setStatus(
+                "✕ No se pudo cargar el motor de visión.",
+                "error"
+            );
+
+            result.style.display =
+                "block";
+
+            result.innerHTML =
+                "<strong>Error del motor</strong><br><br>" +
+                "OpenCV no se ha cargado correctamente.<br><br>" +
+                "Comprueba que GitHub Pages tiene conexión a Internet.";
+
+        }
+
+    },
+    15000
 );
 
-}
-
-},
-15000
-);
 
 
-
-/* =====================================
-   CARGAR FOTO
-===================================== */
-
+/* ==================================================
+   SELECCIONAR FOTO
+================================================== */
 
 input.addEventListener(
-"change",
-function(e){
+    "change",
+    function(event){
 
-const file =
-e.target.files[0];
-
-
-if(!file)
-return;
+        const file =
+            event.target.files[0];
 
 
-result.style.display =
-"none";
+        if (!file) {
+
+            return;
+
+        }
 
 
-canvas.style.display =
-"none";
+        result.style.display =
+            "none";
 
 
-if(
-!file.type.startsWith(
-"image/"
-)
-){
-
-setStatus(
-"✕ El archivo no es una imagen.",
-"error"
-);
-
-return;
-
-}
+        canvas.style.display =
+            "none";
 
 
-setStatus(
-"Foto recibida ✓",
-"success"
-);
+        if (
+            !file.type.startsWith("image/")
+        ) {
+
+            setStatus(
+                "✕ El archivo no es una imagen.",
+                "error"
+            );
+
+            return;
+
+        }
 
 
-const reader =
-new FileReader();
+        setStatus(
+            "Foto recibida ✓",
+            "success"
+        );
 
 
-reader.onload =
-function(){
-
-const img =
-new Image();
+        const reader =
+            new FileReader();
 
 
-img.onload =
-function(){
+        reader.onload =
+            function(){
 
-canvas.style.display =
-"block";
-
-
-if(!cvLoaded){
-
-setStatus(
-"Esperando motor de visión...",
-"warning"
-);
+                const img =
+                    new Image();
 
 
-const start =
-Date.now();
+                img.onload =
+                    function(){
+
+                        canvas.style.display =
+                            "block";
 
 
-const wait =
-setInterval(
-function(){
+                        if (!cvLoaded) {
 
-if(cvLoaded){
-
-clearInterval(
-wait
-);
-
-detectCard(img);
-
-}
-
-else if(
-Date.now() -
-start >
-15000
-){
-
-clearInterval(
-wait
-);
-
-setStatus(
-"✕ El motor de visión no ha cargado.",
-"error"
-);
-
-}
-
-},
-100
-);
-
-}
-
-else{
-
-detectCard(img);
-
-}
-
-};
+                            setStatus(
+                                "Foto cargada. Esperando motor de visión...",
+                                "warning"
+                            );
 
 
-img.onerror =
-function(){
-
-setStatus(
-"✕ No se pudo interpretar la fotografía.",
-"error"
-);
-
-};
+                            const start =
+                                Date.now();
 
 
-img.src =
-reader.result;
+                            const wait =
+                                setInterval(
+                                    function(){
 
-};
+                                        if (cvLoaded) {
 
+                                            clearInterval(wait);
 
-reader.onerror =
-function(){
+                                            detectCard(img);
 
-setStatus(
-"✕ No se pudo leer la fotografía.",
-"error"
-);
-
-};
+                                        }
 
 
-reader.readAsDataURL(
-file
-);
+                                        else if (
+                                            Date.now() - start > 15000
+                                        ) {
 
-}
+                                            clearInterval(wait);
 
+                                            setStatus(
+                                                "✕ El motor de visión no ha cargado.",
+                                                "error"
+                                            );
+
+                                        }
+
+                                    },
+                                    100
+                                );
+
+
+                        }
+
+                        else {
+
+                            detectCard(img);
+
+                        }
+
+                    };
+
+
+                img.onerror =
+                    function(){
+
+                        setStatus(
+                            "✕ No se pudo interpretar la fotografía.",
+                            "error"
+                        );
+
+                    };
+
+
+                img.src =
+                    reader.result;
+
+            };
+
+
+        reader.onerror =
+            function(){
+
+                setStatus(
+                    "✕ No se pudo leer la fotografía.",
+                    "error"
+                );
+
+            };
+
+
+        reader.readAsDataURL(file);
+
+    }
 );
 
 
 
-/* =====================================
-   DETECCIÓN DE CARTA
-===================================== */
+/* ==================================================
+   DETECTAR CARTA
+================================================== */
 
+function detectCard(img) {
 
-function detectCard(img){
+    setStatus(
+        "Buscando los bordes de la carta..."
+    );
 
-setStatus(
-"Buscando los bordes de la carta..."
-);
 
+    const MAX_WIDTH = 1400;
 
-const MAX_WIDTH =
-1400;
 
+    const scale =
+        Math.min(
+            1,
+            MAX_WIDTH / img.naturalWidth
+        );
 
-const scale =
-Math.min(
-1,
-MAX_WIDTH /
-img.naturalWidth
-);
 
+    const width =
+        Math.round(
+            img.naturalWidth * scale
+        );
 
-const width =
-Math.round(
-img.naturalWidth *
-scale
-);
 
+    const height =
+        Math.round(
+            img.naturalHeight * scale
+        );
 
-const height =
-Math.round(
-img.naturalHeight *
-scale
-);
 
+    canvas.width =
+        width;
 
-canvas.width =
-width;
 
+    canvas.height =
+        height;
 
-canvas.height =
-height;
 
+    ctx.drawImage(
+        img,
+        0,
+        0,
+        width,
+        height
+    );
 
-ctx.drawImage(
-img,
-0,
-0,
-width,
-height
-);
 
+    let src = null;
+    let gray = null;
+    let blur = null;
+    let edges = null;
+    let morph = null;
+    let contours = null;
+    let hierarchy = null;
+    let best = null;
 
 
-let src = null;
+    try {
 
-let gray = null;
 
-let blur = null;
+        /* ==================================================
+           IMAGEN
+        ================================================== */
 
-let edges = null;
+        src =
+            cv.imread(canvas);
 
-let morph = null;
 
-let contours = null;
 
-let hierarchy = null;
+        /* ==================================================
+           GRIS
+        ================================================== */
 
-let best = null;
+        gray =
+            new cv.Mat();
 
 
+        cv.cvtColor(
+            src,
+            gray,
+            cv.COLOR_RGBA2GRAY
+        );
 
-try{
 
 
-/* =====================================
-   IMAGEN ORIGINAL
-===================================== */
+        /* ==================================================
+           REDUCIR RUIDO
+        ================================================== */
 
+        blur =
+            new cv.Mat();
 
-src =
-cv.imread(
-canvas
-);
 
+        cv.GaussianBlur(
+            gray,
+            blur,
+            new cv.Size(5,5),
+            0
+        );
 
 
-/* =====================================
-   ESCALA DE GRISES
-===================================== */
 
+        /* ==================================================
+           BORDES
+        ================================================== */
 
-gray =
-new cv.Mat();
+        edges =
+            new cv.Mat();
 
 
-cv.cvtColor(
-src,
-gray,
-cv.COLOR_RGBA2GRAY
-);
+        cv.Canny(
+            blur,
+            edges,
+            30,
+            100
+        );
 
 
 
-/* =====================================
-   REDUCIR RUIDO
-===================================== */
+        /* ==================================================
+           CERRAR HUECOS
+        ================================================== */
 
+        morph =
+            new cv.Mat();
 
-blur =
-new cv.Mat();
 
+        const kernel =
+            cv.Mat.ones(
+                5,
+                5,
+                cv.CV_8U
+            );
 
-cv.GaussianBlur(
-gray,
-blur,
-new cv.Size(
-5,
-5
-),
-0
-);
 
+        cv.morphologyEx(
+            edges,
+            morph,
+            cv.MORPH_CLOSE,
+            kernel
+        );
 
 
-/* =====================================
-   DETECTAR BORDES
-===================================== */
+        kernel.delete();
 
 
-edges =
-new cv.Mat();
 
+        /* ==================================================
+           CONTORNOS
+        ================================================== */
 
-cv.Canny(
-blur,
-edges,
-30,
-100
-);
+        contours =
+            new cv.MatVector();
 
 
+        hierarchy =
+            new cv.Mat();
 
-/* =====================================
-   CERRAR PEQUEÑOS HUECOS
-===================================== */
 
+        cv.findContours(
+            morph,
+            contours,
+            hierarchy,
+            cv.RETR_LIST,
+            cv.CHAIN_APPROX_SIMPLE
+        );
 
-morph =
-new cv.Mat();
 
 
-const kernel =
-cv.Mat.ones(
-5,
-5,
-cv.CV_8U
-);
+        let bestScore =
+            0;
 
 
-cv.morphologyEx(
-edges,
-morph,
-cv.MORPH_CLOSE,
-kernel
-);
+        let bestData =
+            null;
 
 
-kernel.delete();
 
+        /* ==================================================
+           ANALIZAR CONTORNOS
+        ================================================== */
 
+        for (
+            let i = 0;
+            i < contours.size();
+            i++
+        ) {
 
-/* =====================================
-   CONTORNOS
-===================================== */
 
+            const contour =
+                contours.get(i);
 
-contours =
-new cv.MatVector();
 
+            const area =
+                Math.abs(
+                    cv.contourArea(
+                        contour
+                    )
+                );
 
-hierarchy =
-new cv.Mat();
 
+            /*
+            Ignorar objetos demasiado pequeños.
+            */
 
-cv.findContours(
-morph,
-contours,
-hierarchy,
-cv.RETR_LIST,
-cv.CHAIN_APPROX_SIMPLE
-);
+            if (
+                area <
+                0.01 *
+                width *
+                height
+            ) {
 
+                contour.delete();
 
+                continue;
 
-let bestScore =
-0;
+            }
 
 
-let bestData =
-null;
 
+            const perimeter =
+                cv.arcLength(
+                    contour,
+                    true
+                );
 
 
-/* =====================================
-   ANALIZAR CONTORNOS
-===================================== */
+            const approx =
+                new cv.Mat();
 
 
-for(
-let i = 0;
-i < contours.size();
-i++
-){
+            cv.approxPolyDP(
+                contour,
+                approx,
+                0.025 * perimeter,
+                true
+            );
 
 
-const contour =
-contours.get(i);
 
+            /*
+            Buscamos cuatro esquinas.
+            */
 
-const area =
-Math.abs(
-cv.contourArea(
-contour
-)
-);
+            if (
+                approx.rows === 4
+            ) {
 
 
+                const points =
+                    getPoints(
+                        approx
+                    );
 
-/*
-La carta debe ocupar
-una parte razonable
-de la fotografía.
-*/
 
+                if (
+                    points.length === 4
+                ) {
 
-if(
-area <
-0.015 *
-width *
-height
-){
 
-contour.delete();
+                    const ordered =
+                        orderPoints(
+                            points
+                        );
 
-continue;
 
-}
 
+                    /* ==================================================
+                       LONGITUDES
+                    ================================================== */
 
+                    const top =
+                        distance(
+                            ordered[0],
+                            ordered[1]
+                        );
 
-const perimeter =
-cv.arcLength(
-contour,
-true
-);
 
+                    const right =
+                        distance(
+                            ordered[1],
+                            ordered[2]
+                        );
 
 
-const approx =
-new cv.Mat();
+                    const bottom =
+                        distance(
+                            ordered[2],
+                            ordered[3]
+                        );
 
 
+                    const left =
+                        distance(
+                            ordered[3],
+                            ordered[0]
+                        );
 
-/*
-Un epsilon ligeramente
-mayor permite encontrar
-las esquinas aunque haya
-ruido en los bordes.
-*/
 
 
-cv.approxPolyDP(
-contour,
-approx,
-0.025 *
-perimeter,
-true
-);
+                    const avgWidth =
+                        (
+                            top +
+                            bottom
+                        ) / 2;
 
 
+                    const avgHeight =
+                        (
+                            left +
+                            right
+                        ) / 2;
 
-/*
-Buscamos exactamente
-4 esquinas.
-*/
 
 
-if(
-approx.rows === 4
-){
+                    if (
+                        avgWidth > 0 &&
+                        avgHeight > 0
+                    ) {
 
 
-const points =
-getPoints(
-approx
-);
+                        const ratio =
+                            Math.min(
+                                avgWidth,
+                                avgHeight
+                            )
+                            /
+                            Math.max(
+                                avgWidth,
+                                avgHeight
+                            );
 
 
 
-if(
-points.length === 4
-){
+                        /*
+                        Permitimos bastante perspectiva.
+                        */
 
+                        if (
+                            ratio >= 0.50 &&
+                            ratio <= 0.90
+                        ) {
 
-const ordered =
-orderPoints(
-points
-);
 
+                            const widthConsistency =
+                                1 -
+                                Math.abs(
+                                    top - bottom
+                                )
+                                /
+                                Math.max(
+                                    top,
+                                    bottom
+                                );
 
 
-/*
----------------------------------------
-LONGITUDES DE LOS 4 LADOS
----------------------------------------
-*/
+                            const heightConsistency =
+                                1 -
+                                Math.abs(
+                                    left - right
+                                )
+                                /
+                                Math.max(
+                                    left,
+                                    right
+                                );
 
 
-const top =
-distance(
-ordered[0],
-ordered[1]
-);
 
+                            const areaRatio =
+                                area /
+                                (
+                                    width *
+                                    height
+                                );
 
-const right =
-distance(
-ordered[1],
-ordered[2]
-);
 
 
-const bottom =
-distance(
-ordered[2],
-ordered[3]
-);
+                            /*
+                            Ratio ideal de una
+                            carta Pokémon estándar.
+                            */
 
+                            const ratioError =
+                                Math.abs(
+                                    ratio - 0.716
+                                );
 
-const left =
-distance(
-ordered[3],
-ordered[0]
-);
 
+                            const ratioScore =
+                                Math.max(
+                                    0,
+                                    1 -
+                                    ratioError /
+                                    0.216
+                                );
 
 
-/*
----------------------------------------
-ANCHOS Y ALTOS MEDIOS
----------------------------------------
-*/
 
+                            /*
+                            Tamaño.
+                            */
 
-const avgWidth =
-(
-top +
-bottom
-) / 2;
+                            const areaScore =
+                                Math.min(
+                                    1,
+                                    areaRatio / 0.30
+                                );
 
 
-const avgHeight =
-(
-left +
-right
-) / 2;
 
+                            /*
+                            Score final.
+                            */
 
+                            const score =
 
-if(
-avgWidth > 0 &&
-avgHeight > 0
-){
+                                ratioScore *
+                                0.35
 
+                                +
 
-const ratio =
-Math.min(
-avgWidth,
-avgHeight
-)
-/
-Math.max(
-avgWidth,
-avgHeight
-);
+                                widthConsistency *
+                                0.25
 
+                                +
 
+                                heightConsistency *
+                                0.25
 
-/*
----------------------------------------
-RATIO
----------------------------------------
+                                +
 
-Carta Pokémon:
+                                areaScore *
+                                0.15;
 
-63 / 88 ≈ 0.716
 
-Pero permitimos bastante
-perspectiva.
-*/
 
+                            if (
+                                score >
+                                bestScore
+                            ) {
 
-if(
-ratio >= 0.52 &&
-ratio <= 0.86
-){
 
+                                if (best) {
 
-/*
----------------------------------------
-SIMETRÍA DE LADOS
----------------------------------------
-*/
+                                    best.delete();
 
+                                }
 
-const widthConsistency =
-1 -
-Math.abs(
-top -
-bottom
-) /
-Math.max(
-top,
-bottom
-);
 
+                                best =
+                                    approx;
 
-const heightConsistency =
-1 -
-Math.abs(
-left -
-right
-) /
-Math.max(
-left,
-right
-);
 
+                                bestScore =
+                                    score;
 
 
-/*
----------------------------------------
-ÁREA
----------------------------------------
-*/
+                                bestData = {
 
+                                    points:
+                                        ordered,
 
-const areaRatio =
-area /
-(
-width *
-height
-);
+                                    ratio:
+                                        ratio,
 
+                                    width:
+                                        avgWidth,
 
+                                    height:
+                                        avgHeight,
 
-/*
----------------------------------------
-RECTANGULARIDAD
----------------------------------------
-*/
+                                    areaRatio:
+                                        areaRatio
 
+                                };
 
-const rectangleArea =
-avgWidth *
-avgHeight;
 
+                            }
 
-const rectangularity =
-Math.min(
-1,
-area /
-rectangleArea
-);
+                            else {
 
+                                approx.delete();
 
+                            }
 
-/*
----------------------------------------
-RATIO SCORE
----------------------------------------
-*/
 
+                        }
 
-const ratioError =
-Math.abs(
-ratio -
-0.716
-);
+                        else {
 
+                            approx.delete();
 
-const ratioScore =
-Math.max(
-0,
-1 -
-ratioError /
-0.196
-);
+                        }
 
+                    }
 
+                    else {
 
-/*
----------------------------------------
-ÁREA SCORE
----------------------------------------
-*/
+                        approx.delete();
 
+                    }
 
-const areaScore =
-Math.min(
-1,
-areaRatio /
-0.25
-);
+                }
 
+                else {
 
+                    approx.delete();
 
-/*
----------------------------------------
-SCORE FINAL
----------------------------------------
-*/
+                }
 
+            }
 
-const score =
+            else {
 
-ratioScore *
-0.35
+                approx.delete();
 
-+
+            }
 
-widthConsistency *
-0.20
 
-+
+            contour.delete();
 
-heightConsistency *
-0.20
+        }
 
-+
 
-rectangularity *
-0.15
 
-+
+        /* ==================================================
+           RESULTADO
+        ================================================== */
 
-areaScore *
-0.10;
+        if (
+            best &&
+            bestScore >= 0.50
+        ) {
 
 
+            const output =
+                src.clone();
 
-/*
----------------------------------------
-MEJOR CANDIDATO
----------------------------------------
-*/
 
+            const vector =
+                new cv.MatVector();
 
-if(
-score >
-bestScore
-){
 
+            vector.push_back(
+                best
+            );
 
-if(best)
-best.delete();
 
 
-best =
-approx;
+            /*
+            Dibujar los cuatro bordes.
+            */
 
+            cv.drawContours(
+                output,
+                vector,
+                -1,
+                new cv.Scalar(
+                    0,
+                    255,
+                    0,
+                    255
+                ),
+                Math.max(
+                    5,
+                    Math.round(
+                        width / 220
+                    )
+                )
+            );
 
-bestScore =
-score;
 
 
-bestData = {
+            /*
+            Dibujar las cuatro esquinas.
+            */
 
-points:
-ordered,
+            for (
+                const point
+                of bestData.points
+            ) {
 
-ratio:
-ratio,
 
-area:
-area,
+                cv.circle(
+                    output,
+                    new cv.Point(
+                        Math.round(point.x),
+                        Math.round(point.y)
+                    ),
+                    Math.max(
+                        7,
+                        Math.round(
+                            width / 90
+                        )
+                    ),
+                    new cv.Scalar(
+                        255,
+                        255,
+                        255,
+                        255
+                    ),
+                    -1
+                );
 
-areaRatio:
-areaRatio,
+            }
 
-width:
-avgWidth,
 
-height:
-avgHeight,
 
-widthConsistency:
-widthConsistency,
+            /*
+            Mostrar resultado.
+            */
 
-heightConsistency:
-heightConsistency
+            cv.imshow(
+                canvas,
+                output
+            );
 
-};
 
 
-}
+            const confidence =
+                Math.min(
+                    99.9,
+                    Math.max(
+                        50,
+                        bestScore * 100
+                    )
+                );
 
-else{
 
-approx.delete();
 
-}
+            setStatus(
+                "✓ CARTA DETECTADA",
+                "success"
+            );
 
 
-}
 
-}
+            result.style.display =
+                "block";
 
-}
 
-}
+            result.innerHTML =
 
-else{
+                "<strong>✓ CARTA DETECTADA</strong><br><br>" +
 
-approx.delete();
+                "<strong>Versión del sistema:</strong> V" +
+                VERSION +
+                "<br><br>" +
 
-}
+                "<strong>Confianza geométrica:</strong> " +
+                confidence.toFixed(1) +
+                "%<br><br>" +
 
+                "<strong>4 esquinas detectadas ✓</strong><br><br>" +
 
-contour.delete();
+                "Ancho aproximado: " +
+                Math.round(
+                    bestData.width
+                ) +
+                " px<br>" +
 
-}
+                "Alto aproximado: " +
+                Math.round(
+                    bestData.height
+                ) +
+                " px<br>" +
 
+                "Proporción: " +
+                bestData.ratio.toFixed(3) +
+                "<br><br>" +
 
+                '<span class="small">' +
 
-/* =====================================
-   VALIDAR CARTA
-===================================== */
+                "Esta versión únicamente determina "+
+                "si existe una forma compatible con "+
+                "una carta y delimita sus bordes. "+
+                "Todavía no identifica Pokémon, "+
+                "colección, idioma ni defectos."
 
+                +
 
-if(
-best &&
-bestScore >= 0.55
-){
+                "</span>";
 
 
-/*
-========================================
-DIBUJAR RESULTADO
-========================================
-*/
 
+            output.delete();
 
-const output =
-src.clone();
+            vector.delete();
 
 
-const vector =
-new cv.MatVector();
+            /*
+            NO borramos best aquí.
+            Se borra una sola vez en finally.
+            */
 
 
-vector.push_back(
-best
-);
+        }
 
+        else {
 
 
-/*
-Bordes verdes
-*/
+            setStatus(
+                "⚠️ NO SE HA DETECTADO UNA CARTA",
+                "warning"
+            );
 
 
-cv.drawContours(
-output,
-vector,
--1,
-new cv.Scalar(
-0,
-255,
-0,
-255
-),
-Math.max(
-5,
-Math.round(
-width /
-220
-)
-)
-);
+            result.style.display =
+                "block";
 
 
+            result.innerHTML =
 
-/*
-========================================
-DIBUJAR 4 ESQUINAS
-========================================
-*/
+                "<strong>ANÁLISIS DETENIDO</strong><br><br>" +
 
+                "No se ha encontrado una forma "+
+                "suficientemente compatible con "+
+                "una carta.<br><br>" +
 
-for(
-const p of bestData.points
-){
+                "✓ La imagen NO se analizará como carta.<br><br>" +
 
-cv.circle(
-output,
-new cv.Point(
-Math.round(p.x),
-Math.round(p.y)
-),
-Math.max(
-7,
-Math.round(
-width /
-90
-)
-),
-new cv.Scalar(
-255,
-255,
-255,
-255
-),
--1
-);
+                '<span class="small">' +
 
-}
+                "El sistema necesita detectar "+
+                "primero los cuatro bordes antes "+
+                "de continuar con cualquier análisis."
 
+                +
 
+                "</span>";
 
-/*
-========================================
-MOSTRAR
-========================================
-*/
+        }
 
 
-cv.imshow(
-canvas,
-output
-);
+    }
 
 
+    catch (
+        error
+    ) {
 
-const confidence =
-Math.min(
-99.9,
-Math.max(
-55,
-bestScore *
-100
-)
-);
 
+        console.error(
+            error
+        );
 
 
-setStatus(
-"✓ CARTA DETECTADA",
-"success"
-);
+        setStatus(
+            "✕ Error durante la detección",
+            "error"
+        );
 
 
+        result.style.display =
+            "block";
 
-result.style.display =
-"block";
 
+        result.innerHTML =
 
-result.innerHTML =
+            "<strong>Error técnico</strong><br><br>" +
 
-"<strong>✓ OBJETO IDENTIFICADO COMO CARTA</strong><br><br>"+
+            "<code>" +
 
-"<strong>Confianza:</strong> "+
-confidence.toFixed(1)+
-"%<br><br>"+
+            escapeHtml(
+                error.message ||
+                String(error)
+            ) +
 
-"<strong>4 esquinas detectadas ✓</strong><br><br>"+
+            "</code>";
 
-"Ancho aproximado: "+
-Math.round(
-bestData.width
-)+
-" px<br>"+
+    }
 
-"Alto aproximado: "+
-Math.round(
-bestData.height
-)+
-" px<br>"+
 
-"Proporción: "+
-bestData.ratio.toFixed(
-3
-)+
-"<br><br>"+
+    finally {
 
-'<span class="small">'+
 
-"El sistema ha validado la geometría "+
-"de la carta antes de continuar. "+
-"No se ha analizado todavía el contenido, "+
-"el Pokémon, el idioma ni la colección."
+        /*
+        Liberamos memoria.
+        */
 
-+
-"</span>";
+        if (src)
+            src.delete();
 
 
+        if (gray)
+            gray.delete();
 
-output.delete();
 
-vector.delete();
+        if (blur)
+            blur.delete();
 
 
-}
+        if (edges)
+            edges.delete();
 
-else{
 
+        if (morph)
+            morph.delete();
 
-/*
-========================================
-NO ES UNA CARTA
-========================================
-*/
 
+        if (contours)
+            contours.delete();
 
-setStatus(
-"⚠️ NO SE HA DETECTADO UNA CARTA",
-"warning"
-);
 
+        if (hierarchy)
+            hierarchy.delete();
 
-result.style.display =
-"block";
 
+        if (best)
+            best.delete();
 
-result.innerHTML =
-
-"<strong>Análisis detenido</strong><br><br>"+
-
-"No se ha encontrado una forma rectangular "+
-"compatible con una carta.<br><br>"+
-
-"✓ La imagen NO se analizará como carta.<br><br>"+
-
-'<span class="small">'+
-
-"El sistema necesita localizar primero "+
-"los cuatro bordes antes de analizar "+
-"cualquier otra característica."
-
-+
-"</span>";
-
-}
-
-
-}
-
-
-/* =====================================
-   ERROR
-===================================== */
-
-
-catch(error){
-
-
-console.error(
-error
-);
-
-
-setStatus(
-"✕ Error durante la detección",
-"error"
-);
-
-
-result.style.display =
-"block";
-
-
-result.innerHTML =
-
-"Se produjo un error técnico:<br><br>"+
-
-"<code>"+
-
-escapeHtml(
-error.message ||
-String(error)
-)+
-
-"</code>";
-
-}
-
-
-/* =====================================
-   LIMPIEZA
-===================================== */
-
-
-finally{
-
-
-if(src)
-src.delete();
-
-
-if(gray)
-gray.delete();
-
-
-if(blur)
-blur.delete();
-
-
-if(edges)
-edges.delete();
-
-
-if(morph)
-morph.delete();
-
-
-if(contours)
-contours.delete();
-
-
-if(hierarchy)
-hierarchy.delete();
-
-
-if(best)
-best.delete();
-
-}
+    }
 
 }
 
 
 
-/* =====================================
+/* ==================================================
    OBTENER PUNTOS
-===================================== */
+================================================== */
+
+function getPoints(mat) {
+
+    const points = [];
 
 
-function getPoints(
-mat
-){
+    for (
+        let i = 0;
+        i < mat.rows;
+        i++
+    ) {
 
-const points = [];
+        points.push({
 
+            x:
+                mat.data32S[
+                    i * 2
+                ],
 
-for(
-let i=0;
-i<mat.rows;
-i++
-){
+            y:
+                mat.data32S[
+                    i * 2 + 1
+                ]
 
-points.push({
+        });
 
-x:
-mat.data32S[
-i *
-2
-],
-
-y:
-mat.data32S[
-i *
-2 +
-1
-]
-
-});
-
-}
+    }
 
 
-return points;
+    return points;
 
 }
 
 
 
-/* =====================================
+/* ==================================================
    ORDENAR ESQUINAS
-===================================== */
+================================================== */
+
+function orderPoints(points) {
+
+    if (
+        points.length !== 4
+    ) {
+
+        return points;
+
+    }
 
 
-function orderPoints(
-points
-){
-
-if(
-points.length !== 4
-)
-return points;
+    const sums =
+        points.map(
+            p =>
+                p.x +
+                p.y
+        );
 
 
-
-const sums =
-points.map(
-p =>
-p.x +
-p.y
-);
-
-
-const diffs =
-points.map(
-p =>
-p.x -
-p.y
-);
+    const diffs =
+        points.map(
+            p =>
+                p.x -
+                p.y
+        );
 
 
-
-const tl =
-points[
-sums.indexOf(
-Math.min(
-...sums
-)
-)
-];
-
-
-const br =
-points[
-sums.indexOf(
-Math.max(
-...sums
-)
-)
-];
+    const tl =
+        points[
+            sums.indexOf(
+                Math.min(
+                    ...sums
+                )
+            )
+        ];
 
 
-const tr =
-points[
-diffs.indexOf(
-Math.max(
-...diffs
-)
-)
-];
+    const br =
+        points[
+            sums.indexOf(
+                Math.max(
+                    ...sums
+                )
+            )
+        ];
 
 
-const bl =
-points[
-diffs.indexOf(
-Math.min(
-...diffs
-)
-)
-];
+    const tr =
+        points[
+            diffs.indexOf(
+                Math.max(
+                    ...diffs
+                )
+            )
+        ];
 
 
-return [
-tl,
-tr,
-br,
-bl
-];
+    const bl =
+        points[
+            diffs.indexOf(
+                Math.min(
+                    ...diffs
+                )
+            )
+        ];
+
+
+    return [
+        tl,
+        tr,
+        br,
+        bl
+    ];
 
 }
 
 
 
-/* =====================================
+/* ==================================================
    DISTANCIA
-===================================== */
-
+================================================== */
 
 function distance(
-a,
-b
-){
+    a,
+    b
+) {
 
-return Math.sqrt(
+    return Math.sqrt(
 
-Math.pow(
-b.x -
-a.x,
-2
-)
+        Math.pow(
+            b.x - a.x,
+            2
+        )
 
-+
+        +
 
-Math.pow(
-b.y -
-a.y,
-2
-)
+        Math.pow(
+            b.y - a.y,
+            2
+        )
 
-);
+    );
 
 }
 
 
 
-/* =====================================
+/* ==================================================
    ESCAPAR HTML
-===================================== */
+================================================== */
 
+function escapeHtml(str) {
 
-function escapeHtml(
-str
-){
+    return String(str)
 
-return String(
-str
-)
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
 
-.replaceAll(
-"&",
-"&amp;"
-)
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
 
-.replaceAll(
-"<",
-"&lt;"
-)
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
 
-.replaceAll(
-">",
-"&gt;"
-)
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
 
-.replaceAll(
-'"',
-"&quot;"
-)
-
-.replaceAll(
-"'",
-"&#039;"
-);
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 
 }
 
