@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Revisa el contorno y la calidad de las fotografías de tu carta, por delante y por detrás.">
+  <title>CEX · Revisión de cartas</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="./" aria-label="CEX, inicio">CEX<span> / </span><small>Card studio</small></a><span class="private">Tus fotos se quedan en este dispositivo</span></header>
+  <main>
+    <div class="intro"><div><p class="eyebrow">01 / CAPTURA</p><h1>Una carta. Ambas caras.</h1><p>Comprueba el contorno y la calidad de tus fotos antes de continuar.</p></div><span class="engine" id="engine" role="status">Preparando detector…</span><button id="retry" hidden>Reintentar conexión</button></div>
+    <div class="workspace" id="workspace"></div>
+    <section class="summary" aria-live="polite"><span class="summary-symbol" aria-hidden="true">↳</span><div><h2 id="summary-title">Empieza por las dos fotografías</h2><p id="summary-text">Añade una foto del anverso y otra del reverso de la misma carta.</p></div><span id="progress">0 / 2</span></section>
+    <section class="guide"><h2>Una buena foto hace la diferencia.</h2><div><p><b>01</b><span><strong>Los cuatro bordes, visibles</strong>Una sola carta, completa y con espacio alrededor.</span></p><p><b>02</b><span><strong>Cámara paralela a la carta</strong>Acércate sin recortar. Evita fotos inclinadas.</span></p><p><b>03</b><span><strong>Luz suave y fondo liso</strong>Sin funda, sombras intensas ni reflejos.</span></p></div></section>
+    <details><summary>Qué puede comprobar esta herramienta</summary><p>Busca un contorno de cuatro lados compatible con una carta de formato estándar y señales de baja resolución, desenfoque o iluminación insuficiente. Son comprobaciones orientativas: pueden fallar con fondos complejos, fundas, reflejos y formatos distintos.</p><p>Un contorno compatible no confirma que el objeto sea una carta. No identifica la carta, no lee su texto, no autentica ni valora su estado y no puede confirmar que ambas fotos pertenezcan a la misma carta. Cuando falta evidencia, el resultado queda sin confirmar.</p></details>
+  </main>
+  <footer><span>CEX · Revisión visual</span><span>Sin porcentajes de confianza artificiales.</span></footer>
+  <noscript>Activa JavaScript para cargar fotografías y comprobar sus contornos.</noscript>
+</body></html>
