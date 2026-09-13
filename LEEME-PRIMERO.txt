@@ -1,0 +1,33 @@
+CARDEX — SUBIDA ORDENADA A GITHUB
+
+Este paquete contiene la aplicación v1.8.0 y sus datos iniciales.
+
+1. Descomprime el ZIP en el ordenador.
+2. Abre la carpeta descomprimida. Dentro debes ver index.html y las carpetas data, tools y .github.
+3. En tu repositorio CardEX, usa Add file > Upload files.
+4. Arrastra juntos los archivos y LAS CARPETAS COMPLETAS desde esa carpeta a GitHub.
+   No entres en data para seleccionar sus archivos individualmente: eso los dejaría en la raíz.
+   No arrastres la carpeta contenedora CardEX-repositorio-completo-v1.8.0: arrastra su contenido.
+   No subas el ZIP sin descomprimir.
+5. Antes de guardar, comprueba que GitHub muestra data/visual-index.json y no solo visual-index.json.
+6. Guarda con Commit changes en main y espera a que termine el despliegue.
+7. Abre https://garciatalavera2003-code.github.io/CardEX/ y comprueba v1.8.0 y el contador del índice.
+
+RUTAS QUE DEBEN EXISTIR
+
+index.html
+data/visual-index.json
+data/visual-index.bin
+data/local-features.json
+data/local-features.bin
+tools/build_visual_index.py
+.github/workflows/build-visual-index.yml
+
+AMPLIAR EL ÍNDICE
+
+El índice inicial tiene 206 referencias: no incluye todas las cartas.
+Cuando esté todo subido, abre Actions > Ampliar indice visual PCI > Run workflow.
+Al terminar, descarga PCI-indice-visual-actualizado y coloca sus archivos dentro de data.
+Consulta README.md para el procedimiento completo.
+
+Esta entrega reorganiza el paquete; no cambia el motor ni la versión de la aplicación.
